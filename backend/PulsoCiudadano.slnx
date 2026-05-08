@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PulsoCiudadano.Domain/PulsoCiudadano.Domain.csproj" />
+    <Project Path="src/PulsoCiudadano.Infrastructure/PulsoCiudadano.Infrastructure.csproj" />
+    <Project Path="src/PulsoCiudadano.Worker/PulsoCiudadano.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PulsoCiudadano.Tests/PulsoCiudadano.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+/* Estilos base personalizados */
+body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+/* Tremor overrides para modo claro */
+.tremor-Card-root {
+  @apply shadow-sm;
+}
