@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PulsoCiudadano.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+701684f259743af13e0df959c93966f0090f0f27")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e82c4fdff87d6b80fd9a6ee86102f1cb0c0f067b")]
 [assembly: System.Reflection.AssemblyProductAttribute("PulsoCiudadano.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PulsoCiudadano.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
