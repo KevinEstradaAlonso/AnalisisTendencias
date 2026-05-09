@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react'
 import { Card, DonutChart, Legend } from '@tremor/react'
 
 interface RadarData {
@@ -14,10 +15,42 @@ interface Props {
 }
 
 export default function RadarGeneral({ data, onTemaClick }: Props) {
-  const chartData = data.map(d => ({
-    name: d.tema,
-    value: d.total,
-  }))
+  const colors = ['blue', 'teal', 'purple', 'pink', 'red', 'orange', 'yellow', 'green']
+
+  const allTemas = useMemo(() => data.map((d) => d.tema), [data])
+  const [disabledTemas, setDisabledTemas] = useState<Set<string>>(() => new Set())
+
+  useEffect(() => {
+    setDisabledTemas((prev) => {
+      if (prev.size === 0) return prev
+      const allowed = new Set(allTemas)
+      const next = new Set(Array.from(prev).filter((t) => allowed.has(t)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [allTemas])
+
+  const visibleData = useMemo(() => {
+    if (disabledTemas.size === 0) return data
+    return data.filter((d) => !disabledTemas.has(d.tema))
+  }, [data, disabledTemas])
+
+  const chartData = useMemo(
+    () =>
+      visibleData.map((d) => ({
+        name: d.tema,
+        value: d.total,
+      })),
+    [visibleData]
+  )
+
+  const toggleTema = (tema: string) => {
+    setDisabledTemas((prev) => {
+      const next = new Set(prev)
+      if (next.has(tema)) next.delete(tema)
+      else next.add(tema)
+      return next
+    })
+  }
 
   return (
     <Card>
@@ -27,18 +60,48 @@ export default function RadarGeneral({ data, onTemaClick }: Props) {
       </div>
       
       <div className="mt-6">
-        <DonutChart
-          data={chartData}
-          category="value"
-          index="name"
-          colors={['blue', 'teal', 'purple', 'pink', 'red', 'orange', 'yellow', 'green']}
-          className="h-52"
-          onValueChange={(v) => v && onTemaClick(v.name)}
-          showAnimation={true}
-        />
+        {chartData.length === 0 ? (
+          <div className="h-52 flex items-center justify-center text-sm text-gray-400 font-light">
+            Selecciona al menos un tema para ver la gráfica
+          </div>
+        ) : (
+          <DonutChart
+            data={chartData}
+            category="value"
+            index="name"
+            colors={colors}
+            className="h-52"
+            onValueChange={(v) => v && onTemaClick(v.name)}
+            showAnimation={true}
+          />
+        )}
+
+        <div className="mt-4">
+          <div className="text-xs text-gray-500 font-light mb-2">Mostrar en gráfica</div>
+          <div className="flex flex-wrap gap-2">
+            {allTemas.map((tema) => {
+              const checked = !disabledTemas.has(tema)
+              return (
+                <label
+                  key={tema}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/40 border border-white/40 hover:bg-white/60 transition-colors text-sm text-gray-700"
+                >
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300"
+                    checked={checked}
+                    onChange={() => toggleTema(tema)}
+                  />
+                  <span className="capitalize">{tema}</span>
+                </label>
+              )
+            })}
+          </div>
+        </div>
+
         <Legend
-          categories={data.map(d => d.tema)}
-          colors={['blue', 'teal', 'purple', 'pink', 'red', 'orange', 'yellow', 'green']}
+          categories={visibleData.map((d) => d.tema)}
+          colors={colors}
           className="mt-4 justify-center flex-wrap"
         />
       </div>
