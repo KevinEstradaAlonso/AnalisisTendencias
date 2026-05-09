@@ -1,0 +1,21 @@
+# === Secrets / credentials ===
+# Firebase service account key (NEVER commit)
+backend/src/PulsoCiudadano.Worker/firebase-credentials.json
+
+# Common credential file patterns
+**/*credentials*.json
+**/*service-account*.json
+
+# === Node / Vite ===
+node_modules/
+dist/
+.vite/
+
+# === .NET ===
+bin/
+obj/
+
+# === OS / editor ===
+.DS_Store
+Thumbs.db
+.vscode/

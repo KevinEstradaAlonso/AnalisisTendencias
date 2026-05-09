@@ -59,14 +59,21 @@ export function usePosts(desde: Date, hasta: Date) {
   const { userData } = useAuth()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
+  
+  // Usar timestamps para dependencias estables
+  const desdeTime = desde.getTime()
+  const hastaTime = hasta.getTime()
 
   useEffect(() => {
-    if (!userData?.municipioId) return
+    if (!userData?.municipioId) {
+      setLoading(false)
+      return
+    }
 
     const q = query(
       collection(db, 'municipios', userData.municipioId, 'posts'),
-      where('fecha', '>=', Timestamp.fromDate(desde)),
-      where('fecha', '<=', Timestamp.fromDate(hasta)),
+      where('fecha', '>=', Timestamp.fromMillis(desdeTime)),
+      where('fecha', '<=', Timestamp.fromMillis(hastaTime)),
       orderBy('fecha', 'desc')
     )
 
@@ -74,10 +81,13 @@ export function usePosts(desde: Date, hasta: Date) {
       const postsData = snapshot.docs.map(doc => convertPost(doc.id, doc.data()))
       setPosts(postsData)
       setLoading(false)
+    }, (error) => {
+      console.error('Error en posts:', error)
+      setLoading(false)
     })
 
     return () => unsubscribe()
-  }, [userData?.municipioId, desde, hasta])
+  }, [userData?.municipioId, desdeTime, hastaTime])
 
   return { posts, loading }
 }
@@ -88,17 +98,23 @@ export function useAlertas() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!userData?.municipioId) return
+    if (!userData?.municipioId) {
+      setLoading(false)
+      return
+    }
 
     const q = query(
       collection(db, 'municipios', userData.municipioId, 'alertas'),
-      where('resuelta', '==', false),
-      orderBy('fecha_generacion', 'desc')
+      where('resuelta', '==', false)
+      // orderBy requiere índice compuesto - removido temporalmente
     )
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const alertasData = snapshot.docs.map(doc => convertAlerta(doc.id, doc.data()))
       setAlertas(alertasData)
+      setLoading(false)
+    }, (error) => {
+      console.error('Error en alertas:', error)
       setLoading(false)
     })
 

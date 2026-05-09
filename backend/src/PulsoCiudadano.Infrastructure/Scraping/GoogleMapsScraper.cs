@@ -24,7 +24,7 @@ public class GoogleMapsScraper : ScraperBase
         
         try
         {
-            await using var page = await GetPageAsync();
+            var page = await GetPageAsync();
             
             _logger.LogInformation("Scrapeando Google Maps: {Url}", url);
             

@@ -15,19 +15,23 @@ interface Props {
 export default function GraficaTendencia({ tema, data }: Props) {
   return (
     <Card>
-      <h3 className="text-lg font-medium text-gray-900 capitalize">
-        Tendencia: {tema}
-      </h3>
-      <p className="text-sm text-gray-500">Últimos 7 días</p>
+      <div>
+        <h3 className="text-lg font-light text-gray-700 capitalize">
+          Tendencia: {tema}
+        </h3>
+        <p className="text-sm text-gray-400 font-light">Últimos 7 días</p>
+      </div>
 
       <AreaChart
-        className="h-72 mt-4"
+        className="h-64 mt-6"
         data={data}
         index="fecha"
         categories={['negativos', 'positivos', 'total']}
-        colors={['rose', 'emerald', 'blue']}
+        colors={['rose', 'emerald', 'indigo']}
         showLegend
         showGridLines={false}
+        curveType="monotone"
+        showAnimation={true}
       />
     </Card>
   )

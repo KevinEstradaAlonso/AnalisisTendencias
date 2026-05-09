@@ -24,7 +24,7 @@ public class TwitterScraper : ScraperBase
         
         try
         {
-            await using var page = await GetPageAsync();
+            var page = await GetPageAsync();
             
             // Configurar user agent para evitar bloqueos
             await page.SetExtraHTTPHeadersAsync(new Dictionary<string, string>

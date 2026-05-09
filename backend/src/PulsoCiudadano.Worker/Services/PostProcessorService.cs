@@ -39,10 +39,20 @@ public class PostProcessorService : BackgroundService
             try
             {
                 await ProcesarPostAsync(postRaw, stoppingToken);
+                
+                // Delay para respetar rate limits de APIs de IA (15 req/min)
+                await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error procesando post {Id}", postRaw.Id);
+                
+                // Si es rate limit, esperar más
+                if (ex.Message.Contains("429"))
+                {
+                    _logger.LogWarning("Rate limit alcanzado, esperando 60 segundos...");
+                    await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
+                }
             }
         }
     }

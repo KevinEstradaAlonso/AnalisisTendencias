@@ -38,13 +38,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (firebaseUser) {
         // Cargar datos del usuario desde Firestore
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
+        const userDoc = await getDoc(doc(db, 'usuarios', firebaseUser.uid))
         if (userDoc.exists()) {
           const data = userDoc.data()
           setUserData({
             uid: firebaseUser.uid,
             email: data.email,
-            municipioId: data.municipio_id,
+            municipioId: data.municipioId,
             rol: data.rol,
             activo: data.activo,
           })

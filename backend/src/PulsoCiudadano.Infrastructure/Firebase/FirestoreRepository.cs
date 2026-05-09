@@ -169,13 +169,42 @@ public class FirestoreRepository : IFirestoreRepository
     private static Municipio ConvertToMunicipio(DocumentSnapshot doc)
     {
         var data = doc.ToDictionary();
+        
+        // Deserializar fuentes
+        var fuentes = new List<FuenteConfig>();
+        if (data.GetValueOrDefault("fuentes") is IEnumerable<object> fuentesArray)
+        {
+            foreach (var item in fuentesArray)
+            {
+                if (item is Dictionary<string, object> fuenteDict)
+                {
+                    fuentes.Add(new FuenteConfig
+                    {
+                        Tipo = fuenteDict.GetValueOrDefault("tipo")?.ToString() ?? "",
+                        Url = fuenteDict.GetValueOrDefault("url")?.ToString() ?? "",
+                        Activa = fuenteDict.GetValueOrDefault("activa") as bool? ?? true
+                    });
+                }
+            }
+        }
+
+        // Deserializar temas
+        var temasConfig = new TemasConfig { Globales = new(), Personalizados = new() };
+        if (data.GetValueOrDefault("temas") is Dictionary<string, object> temasDict)
+        {
+            if (temasDict.GetValueOrDefault("globales") is IEnumerable<object> globales)
+            {
+                temasConfig.Globales = globales.Select(g => g?.ToString() ?? "").ToList();
+            }
+        }
+        
         return new Municipio
         {
             Id = doc.Id,
             Nombre = data.GetValueOrDefault("nombre")?.ToString() ?? "",
             Activo = data.GetValueOrDefault("activo") as bool? ?? true,
-            Fuentes = new List<FuenteConfig>(), // TODO: Deserializar
-            Temas = new TemasConfig { Globales = new(), Personalizados = new() }, // TODO: Deserializar
+            Fuentes = fuentes,
+            Temas = temasConfig,
             Alertas = new AlertasConfig()
         };
     }

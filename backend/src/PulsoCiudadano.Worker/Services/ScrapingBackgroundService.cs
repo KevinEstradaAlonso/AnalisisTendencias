@@ -70,11 +70,14 @@ public class ScrapingBackgroundService : BackgroundService
         CancellationToken stoppingToken)
     {
         _logger.LogInformation("Scrapeando municipio: {Nombre}", municipio.Nombre);
+        _logger.LogInformation("  Fuentes configuradas: {Count}", municipio.Fuentes.Count);
 
         foreach (var fuente in municipio.Fuentes.Where(f => f.Activa))
         {
             if (stoppingToken.IsCancellationRequested)
                 break;
+
+            _logger.LogInformation("  Procesando fuente: {Tipo} - {Url}", fuente.Tipo, fuente.Url);
 
             try
             {

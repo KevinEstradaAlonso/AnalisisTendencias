@@ -19,26 +19,27 @@ export default function RadarGeneral({ data, onTemaClick }: Props) {
     value: d.total,
   }))
 
-  const colors = ['blue', 'cyan', 'indigo', 'violet', 'fuchsia', 'rose', 'amber', 'emerald']
-
   return (
     <Card>
-      <h3 className="text-lg font-medium text-gray-900">Radar de Temas</h3>
-      <p className="text-sm text-gray-500">Distribución de menciones por tema hoy</p>
+      <div>
+        <h3 className="text-lg font-light text-gray-700">Radar de Temas</h3>
+        <p className="text-sm text-gray-400 font-light">Distribución de menciones hoy</p>
+      </div>
       
       <div className="mt-6">
         <DonutChart
           data={chartData}
           category="value"
           index="name"
-          colors={colors}
-          className="h-60"
+          colors={['blue', 'teal', 'purple', 'pink', 'red', 'orange', 'yellow', 'green']}
+          className="h-52"
           onValueChange={(v) => v && onTemaClick(v.name)}
+          showAnimation={true}
         />
         <Legend
           categories={data.map(d => d.tema)}
-          colors={colors}
-          className="mt-4 justify-center"
+          colors={['blue', 'teal', 'purple', 'pink', 'red', 'orange', 'yellow', 'green']}
+          className="mt-4 justify-center flex-wrap"
         />
       </div>
 
@@ -47,16 +48,18 @@ export default function RadarGeneral({ data, onTemaClick }: Props) {
           <button
             key={tema.tema}
             onClick={() => onTemaClick(tema.tema)}
-            className="w-full p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+            className="w-full p-4 text-left bg-white/40 rounded-xl hover:bg-white/60 transition-all duration-200 border border-white/40 group"
           >
-            <div className="flex justify-between items-center">
-              <span className="font-medium text-gray-900 capitalize">{tema.tema}</span>
-              <span className="text-sm text-gray-500">{tema.total} menciones</span>
+            <div className="flex justify-between items-center gap-3">
+              <span className="font-medium text-gray-700 capitalize truncate group-hover:text-indigo-600 transition-colors">
+                {tema.tema}
+              </span>
+              <span className="text-sm text-gray-400 whitespace-nowrap">{tema.total}</span>
             </div>
-            <div className="flex gap-4 mt-1 text-xs">
-              <span className="text-red-600">{tema.negativos} negativos</span>
-              <span className="text-green-600">{tema.positivos} positivos</span>
-              <span className="text-gray-500">{tema.neutrales} neutrales</span>
+            <div className="flex gap-4 mt-2 text-xs">
+              <span className="text-rose-500/80">{tema.negativos} neg</span>
+              <span className="text-emerald-500/80">{tema.positivos} pos</span>
+              <span className="text-gray-400">{tema.neutrales} neu</span>
             </div>
           </button>
         ))}

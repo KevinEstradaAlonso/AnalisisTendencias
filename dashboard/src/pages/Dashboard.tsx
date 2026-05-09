@@ -9,10 +9,13 @@ import { usePosts, useAlertas, type Post, type Alerta } from '../hooks/useFirest
 export default function Dashboard() {
   const navigate = useNavigate()
   
-  // Datos de hoy
-  const hoy = new Date()
-  const inicioHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
-  const finHoy = new Date(inicioHoy.getTime() + 24 * 60 * 60 * 1000)
+  // Datos de hoy - useMemo para evitar re-renders infinitos
+  const { inicioHoy, finHoy, hoy } = useMemo(() => {
+    const hoy = new Date()
+    const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+    const fin = new Date(inicio.getTime() + 24 * 60 * 60 * 1000)
+    return { inicioHoy: inicio, finHoy: fin, hoy }
+  }, []) // Solo se calcula una vez
   
   const { posts, loading: loadingPosts } = usePosts(inicioHoy, finHoy)
   const { alertas, loading: loadingAlertas } = useAlertas()
@@ -84,56 +87,66 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500">Resumen del día: {hoy.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-3xl font-light text-gray-800 tracking-tight">Dashboard</h1>
+          <p className="text-gray-500 mt-1 font-light">
+            {hoy.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+        <div className="glass-button px-4 py-2 text-sm text-gray-600">
+          Última actualización: {hoy.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+        </div>
       </div>
 
-      {/* KPIs */}
-      <Grid numItemsSm={2} numItemsLg={4} className="gap-6">
-        <Card decoration="top" decorationColor="blue">
-          <Flex justifyContent="between" alignItems="center">
-            <div>
-              <Text>Menciones Totales</Text>
-              <Metric>{metricas.totalPosts}</Metric>
+      {/* KPIs - Liquid Glass */}
+      <Grid numItemsSm={2} numItemsLg={4} className="gap-5">
+        <Card className="!border-l-4 !border-l-indigo-300">
+          <div className="space-y-2">
+            <Text className="text-gray-500 text-sm font-medium">Menciones Totales</Text>
+            <div className="flex items-baseline gap-2">
+              <Metric className="text-gray-800">{metricas.totalPosts}</Metric>
+              <span className="text-xs text-gray-400">hoy</span>
             </div>
-          </Flex>
+          </div>
         </Card>
 
-        <Card decoration="top" decorationColor="rose">
-          <Flex justifyContent="between" alignItems="center">
-            <div>
-              <Text>Menciones Negativas</Text>
-              <Metric>{metricas.negativos}</Metric>
-            </div>
-            {metricas.negativos > 0 && (
-              <Badge color="rose">
-                {Math.round((metricas.negativos / metricas.totalPosts) * 100)}%
-              </Badge>
-            )}
-          </Flex>
+        <Card className="!border-l-4 !border-l-rose-300">
+          <div className="space-y-2">
+            <Text className="text-gray-500 text-sm font-medium">Menciones Negativas</Text>
+            <Flex alignItems="baseline" className="gap-2">
+              <Metric className="text-gray-800">{metricas.negativos}</Metric>
+              {metricas.negativos > 0 && metricas.totalPosts > 0 && (
+                <Badge color="rose" size="sm">
+                  {Math.round((metricas.negativos / metricas.totalPosts) * 100)}%
+                </Badge>
+              )}
+            </Flex>
+          </div>
         </Card>
 
-        <Card decoration="top" decorationColor="orange">
-          <Flex justifyContent="between" alignItems="center">
-            <div>
-              <Text>Urgencia Alta</Text>
-              <Metric>{metricas.urgentes}</Metric>
-            </div>
-          </Flex>
+        <Card className="!border-l-4 !border-l-amber-300">
+          <div className="space-y-2">
+            <Text className="text-gray-500 text-sm font-medium">Urgencia Alta</Text>
+            <Metric className="text-gray-800">{metricas.urgentes}</Metric>
+          </div>
         </Card>
 
-        <Card decoration="top" decorationColor="red">
-          <Flex justifyContent="between" alignItems="center">
-            <div>
-              <Text>Riesgo Viral</Text>
-              <Metric>{metricas.riesgoViral}</Metric>
-            </div>
-            {metricas.riesgoViral > 0 && (
-              <Badge color="red">Atención</Badge>
-            )}
-          </Flex>
+        <Card className="!border-l-4 !border-l-orange-300">
+          <div className="space-y-2">
+            <Flex justifyContent="between" alignItems="start">
+              <Text className="text-gray-500 text-sm font-medium">Riesgo Viral</Text>
+              {metricas.riesgoViral > 0 && (
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                </span>
+              )}
+            </Flex>
+            <Metric className="text-gray-800">{metricas.riesgoViral}</Metric>
+          </div>
         </Card>
       </Grid>
 

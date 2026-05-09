@@ -1,3 +1,4 @@
+using System.ClientModel;
 using Microsoft.Extensions.Options;
 using OpenAI;
 using OpenAI.Chat;
@@ -24,7 +25,8 @@ public class DeepSeekProvider : IAIProvider
             Endpoint = new Uri(deepSeekSettings.Endpoint)
         };
         
-        var openAIClient = new OpenAIClient(deepSeekSettings.ApiKey, options);
+        var credential = new ApiKeyCredential(deepSeekSettings.ApiKey);
+        var openAIClient = new OpenAIClient(credential, options);
         _client = openAIClient.GetChatClient(deepSeekSettings.Model);
     }
 

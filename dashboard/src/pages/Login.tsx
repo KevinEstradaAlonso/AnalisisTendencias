@@ -26,22 +26,25 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-800">
-      <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Pulso Ciudadano</h1>
-          <p className="text-gray-500 mt-2">Monitoreo de opinión pública</p>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-full max-w-md p-10 glass-card animate-fade-in">
+        <div className="text-center mb-10">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center">
+            <span className="text-white font-bold text-2xl">PC</span>
+          </div>
+          <h1 className="text-2xl font-light text-gray-800 tracking-tight">Pulso Ciudadano</h1>
+          <p className="text-gray-400 mt-2 font-light">Monitoreo de opinión pública</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">
+            <div className="p-4 text-sm text-rose-600 bg-rose-50/60 rounded-xl border border-rose-100">
               {error}
             </div>
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-600 mb-2">
               Correo electrónico
             </label>
             <input
@@ -49,14 +52,14 @@ export default function Login() {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="block w-full px-4 py-3 bg-white/50 border border-white/40 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all placeholder:text-gray-400"
               placeholder="tu@email.com"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-600 mb-2">
               Contraseña
             </label>
             <input
@@ -64,7 +67,7 @@ export default function Login() {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="block w-full px-4 py-3 bg-white/50 border border-white/40 rounded-xl focus:ring-2 focus:ring-indigo-300 focus:border-transparent transition-all placeholder:text-gray-400"
               placeholder="••••••••"
               required
             />
@@ -73,9 +76,16 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="w-full py-3.5 px-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-medium rounded-xl hover:from-indigo-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200/50"
           >
-            {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="glass-spinner w-4 h-4 animate-spin"></span>
+                Iniciando...
+              </span>
+            ) : (
+              'Iniciar sesión'
+            )}
           </button>
         </form>
       </div>

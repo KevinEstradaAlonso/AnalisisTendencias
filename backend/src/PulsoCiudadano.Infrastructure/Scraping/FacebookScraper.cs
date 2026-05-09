@@ -24,7 +24,7 @@ public class FacebookScraper : ScraperBase
         
         try
         {
-            await using var page = await GetPageAsync();
+            var page = await GetPageAsync();
             
             _logger.LogInformation("Scrapeando Facebook: {Url}", url);
             
@@ -33,6 +33,18 @@ public class FacebookScraper : ScraperBase
                 WaitUntil = WaitUntilState.NetworkIdle,
                 Timeout = 30000 
             });
+
+            // Cerrar modal de login si aparece
+            try
+            {
+                var closeButton = await page.QuerySelectorAsync("[aria-label='Close'], [aria-label='Cerrar']");
+                if (closeButton != null)
+                {
+                    await closeButton.ClickAsync();
+                    await page.WaitForTimeoutAsync(1000);
+                }
+            }
+            catch { /* Ignorar si no hay modal */ }
 
             // Esperar a que carguen los posts
             await page.WaitForTimeoutAsync(3000);
@@ -44,8 +56,25 @@ public class FacebookScraper : ScraperBase
                 await page.WaitForTimeoutAsync(2000);
             }
 
+            // Expandir todos los "Ver más" para obtener texto completo
+            try
+            {
+                var verMasButtons = await page.QuerySelectorAllAsync("text=Ver más, text=See more, text=See More");
+                foreach (var btn in verMasButtons)
+                {
+                    try
+                    {
+                        await btn.ClickAsync();
+                        await page.WaitForTimeoutAsync(300);
+                    }
+                    catch { /* Algunos botones pueden no ser clickeables */ }
+                }
+                _logger.LogInformation("Expandidos {Count} posts con 'Ver más'", verMasButtons.Count);
+            }
+            catch { /* Continuar si no hay botones */ }
+
             // Extraer posts (selectores pueden variar)
-            var postElements = await page.QuerySelectorAllAsync("[data-ad-preview='message'], [data-testid='post_message']");
+            var postElements = await page.QuerySelectorAllAsync("[data-ad-preview='message'], [data-testid='post_message'], div[dir='auto']");
             
             foreach (var postElement in postElements)
             {
@@ -53,7 +82,11 @@ public class FacebookScraper : ScraperBase
                 {
                     var textoContent = await postElement.InnerTextAsync();
                     
-                    if (string.IsNullOrWhiteSpace(textoContent) || textoContent.Length < 10)
+                    if (string.IsNullOrWhiteSpace(textoContent) || textoContent.Length < 20)
+                        continue;
+
+                    // Evitar duplicados y textos muy cortos
+                    if (posts.Any(p => p.Texto.Contains(textoContent) || textoContent.Contains(p.Texto)))
                         continue;
 
                     posts.Add(new PostRaw
@@ -61,7 +94,7 @@ public class FacebookScraper : ScraperBase
                         Id = Guid.NewGuid().ToString(),
                         Fuente = TipoFuente,
                         UrlOrigen = url,
-                        Texto = textoContent,
+                        Texto = textoContent.Trim(),
                         Fecha = DateTime.UtcNow, // Facebook oculta fechas sin login
                         MunicipioId = municipioId
                     });
