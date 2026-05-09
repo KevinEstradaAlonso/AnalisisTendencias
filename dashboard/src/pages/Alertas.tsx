@@ -25,7 +25,7 @@ export default function Alertas() {
     leida: `${pillBase} bg-gray-50/60 text-gray-700 border-gray-200/50`,
   }
 
-  const formatTipo = (value: string) => value.replaceAll('_', ' ')
+  const formatTipo = (value: string) => value.replace(/_/g, ' ')
 
   const marcarLeida = async (alertaId: string) => {
     if (!userData?.municipioId) return
