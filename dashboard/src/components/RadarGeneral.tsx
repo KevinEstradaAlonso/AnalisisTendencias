@@ -19,6 +19,7 @@ export default function RadarGeneral({ data, onTemaClick }: Props) {
 
   const allTemas = useMemo(() => data.map((d) => d.tema), [data])
   const [disabledTemas, setDisabledTemas] = useState<Set<string>>(() => new Set())
+  const [showAllTemas, setShowAllTemas] = useState(false)
 
   useEffect(() => {
     setDisabledTemas((prev) => {
@@ -52,6 +53,11 @@ export default function RadarGeneral({ data, onTemaClick }: Props) {
     })
   }
 
+  const maxTemasCollapsed = 12
+  const maxListCollapsed = 8
+  const temasForToggles = showAllTemas ? allTemas : allTemas.slice(0, maxTemasCollapsed)
+  const listData = showAllTemas ? data : data.slice(0, maxListCollapsed)
+
   return (
     <Card>
       <div>
@@ -79,7 +85,7 @@ export default function RadarGeneral({ data, onTemaClick }: Props) {
         <div className="mt-4">
           <div className="text-xs text-gray-500 font-light mb-2">Mostrar en gráfica</div>
           <div className="flex flex-wrap gap-2">
-            {allTemas.map((tema) => {
+            {temasForToggles.map((tema) => {
               const checked = !disabledTemas.has(tema)
               return (
                 <label
@@ -97,6 +103,16 @@ export default function RadarGeneral({ data, onTemaClick }: Props) {
               )
             })}
           </div>
+
+          {allTemas.length > maxTemasCollapsed && (
+            <button
+              type="button"
+              onClick={() => setShowAllTemas((v) => !v)}
+              className="mt-3 text-sm text-indigo-600 hover:text-indigo-700 transition-colors"
+            >
+              {showAllTemas ? 'Ver menos' : `Ver todos los temas (${allTemas.length})`}
+            </button>
+          )}
         </div>
 
         <Legend
@@ -107,7 +123,7 @@ export default function RadarGeneral({ data, onTemaClick }: Props) {
       </div>
 
       <div className="mt-6 space-y-2">
-        {data.map((tema) => (
+        {listData.map((tema) => (
           <button
             key={tema.tema}
             onClick={() => onTemaClick(tema.tema)}
@@ -126,6 +142,16 @@ export default function RadarGeneral({ data, onTemaClick }: Props) {
             </div>
           </button>
         ))}
+
+        {!showAllTemas && data.length > maxListCollapsed && (
+          <button
+            type="button"
+            onClick={() => setShowAllTemas(true)}
+            className="w-full p-3 text-center bg-white/30 rounded-xl hover:bg-white/50 transition-all duration-200 border border-white/40 text-sm text-gray-600"
+          >
+            Ver todos los temas
+          </button>
+        )}
       </div>
     </Card>
   )

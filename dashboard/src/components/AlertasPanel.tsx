@@ -1,4 +1,4 @@
-import { Card, Badge } from '@tremor/react'
+import { Card } from '@tremor/react'
 import { ExclamationTriangleIcon, FireIcon, ClockIcon } from '@heroicons/react/24/outline'
 import type { Alerta } from '../hooks/useFirestore'
 
@@ -11,6 +11,27 @@ const tipoAlertaConfig: Record<string, { icon: typeof FireIcon; color: string; l
   riesgo_viral: { icon: FireIcon, color: 'rose', label: 'Riesgo Viral' },
   problema_cronico: { icon: ClockIcon, color: 'amber', label: 'Problema Crónico' },
   umbral_superado: { icon: ExclamationTriangleIcon, color: 'orange', label: 'Umbral Superado' },
+}
+
+const pillBase =
+  'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border whitespace-nowrap backdrop-blur-sm'
+
+const pillByColor: Record<'rose' | 'amber' | 'orange', string> = {
+  rose: `${pillBase} bg-rose-50/60 text-rose-700 border-rose-200/50`,
+  amber: `${pillBase} bg-amber-50/60 text-amber-700 border-amber-200/50`,
+  orange: `${pillBase} bg-orange-50/60 text-orange-700 border-orange-200/50`,
+}
+
+const iconWrapByColor: Record<'rose' | 'amber' | 'orange', string> = {
+  rose: 'p-2 rounded-lg bg-rose-100/50',
+  amber: 'p-2 rounded-lg bg-amber-100/50',
+  orange: 'p-2 rounded-lg bg-orange-100/50',
+}
+
+const iconByColor: Record<'rose' | 'amber' | 'orange', string> = {
+  rose: 'w-4 h-4 text-rose-500',
+  amber: 'w-4 h-4 text-amber-500',
+  orange: 'w-4 h-4 text-orange-500',
 }
 
 export default function AlertasPanel({ alertas, onAlertaClick }: Props) {
@@ -32,13 +53,14 @@ export default function AlertasPanel({ alertas, onAlertaClick }: Props) {
     <Card>
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-light text-gray-700">Alertas Activas</h3>
-        <Badge color="rose" size="sm">{alertas.length}</Badge>
+        <span className={pillByColor.rose}>{alertas.length}</span>
       </div>
 
       <div className="mt-5 space-y-3">
         {alertas.slice(0, 5).map((alerta) => {
           const config = tipoAlertaConfig[alerta.tipoAlerta] ?? tipoAlertaConfig.umbral_superado
           const Icon = config.icon
+          const colorKey = (config.color as 'rose' | 'amber' | 'orange')
 
           return (
             <button
@@ -51,14 +73,12 @@ export default function AlertasPanel({ alertas, onAlertaClick }: Props) {
               } border border-white/40 hover:shadow-sm`}
             >
               <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-lg bg-${config.color}-100/50`}>
-                  <Icon className={`w-4 h-4 text-${config.color}-500`} />
+                <div className={iconWrapByColor[colorKey]}>
+                  <Icon className={iconByColor[colorKey]} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge color={config.color as 'rose' | 'amber' | 'orange'} size="xs">
-                      {config.label}
-                    </Badge>
+                    <span className={pillByColor[colorKey]}>{config.label}</span>
                     <span className="text-xs text-gray-400">
                       {alerta.fechaGeneracion.toLocaleDateString('es-MX')}
                     </span>
