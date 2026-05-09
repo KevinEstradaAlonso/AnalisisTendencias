@@ -6,6 +6,12 @@ backend/src/PulsoCiudadano.Worker/firebase-credentials.json
 **/*credentials*.json
 **/*service-account*.json
 
+# Env files (local secrets)
+.env
+.env.*
+**/.env
+**/.env.*
+
 # === Node / Vite ===
 node_modules/
 dist/
@@ -15,7 +21,13 @@ dist/
 bin/
 obj/
 
+# Playwright (often ends up under bin/ during local runs)
+.playwright/
+**/.playwright/
+
 # === OS / editor ===
 .DS_Store
 Thumbs.db
 .vscode/
+.vs/
+.idea/
