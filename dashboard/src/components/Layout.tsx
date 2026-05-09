@@ -1,16 +1,22 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { 
   HomeIcon, 
   BellAlertIcon, 
   Cog6ToothIcon, 
   UsersIcon,
+  Bars3Icon,
+  XMarkIcon,
   ArrowRightOnRectangleIcon 
 } from '@heroicons/react/24/outline'
 
 export default function Layout() {
   const { userData, logout } = useAuth()
   const location = useLocation()
+
+  const [isDesktop, setIsDesktop] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: HomeIcon },
@@ -24,10 +30,37 @@ export default function Layout() {
 
   const isAdmin = userData?.rol === 'admin' || userData?.rol === 'super_admin'
 
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)')
+    const sync = () => {
+      setIsDesktop(mq.matches)
+      setSidebarOpen(mq.matches)
+    }
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    if (!isDesktop) setSidebarOpen(false)
+  }, [location.pathname, isDesktop])
+
+  const handleNavClick = useMemo(() => {
+    return () => {
+      if (!isDesktop) setSidebarOpen(false)
+    }
+  }, [isDesktop])
+
   return (
     <div className="min-h-screen">
       {/* Sidebar - Liquid Glass */}
-      <div className="fixed inset-y-0 left-0 w-64 glass-sidebar">
+      <div
+        className={
+          `fixed inset-y-0 left-0 w-64 glass-sidebar z-30 transform transition-transform duration-300 ease-out ` +
+          `${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`
+        }
+      >
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center h-16 px-6 border-b border-white/30">
@@ -49,6 +82,7 @@ export default function Layout() {
                 <Link
                   key={item.name}
                   to={item.href}
+                  onClick={handleNavClick}
                   className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
                     isActive
                       ? 'bg-white/60 text-indigo-700 shadow-sm'
@@ -74,6 +108,7 @@ export default function Layout() {
                     <Link
                       key={item.name}
                       to={item.href}
+                      onClick={handleNavClick}
                       className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
                         isActive
                           ? 'bg-white/60 text-indigo-700 shadow-sm'
@@ -111,9 +146,31 @@ export default function Layout() {
       </div>
 
       {/* Main content */}
-      <div className="pl-64">
-        <main className="p-8 animate-fade-in">
-          <Outlet />
+      <div
+        className={
+          `transition-transform duration-300 ease-out lg:pl-64 ` +
+          `${sidebarOpen ? 'translate-x-64' : 'translate-x-0'} lg:translate-x-0`
+        }
+      >
+        <main className="px-4 py-6 sm:p-8 animate-fade-in">
+          <div className="mx-auto w-full max-w-7xl">
+            {/* Mobile header */}
+            <div className="lg:hidden mb-4 flex items-center justify-between">
+              <button
+                className="glass-button p-2"
+                onClick={() => setSidebarOpen(v => !v)}
+                aria-label={sidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
+              >
+                {sidebarOpen ? (
+                  <XMarkIcon className="w-5 h-5 text-gray-700" />
+                ) : (
+                  <Bars3Icon className="w-5 h-5 text-gray-700" />
+                )}
+              </button>
+              <div className="text-xs text-gray-400 font-light">Pulso Ciudadano</div>
+            </div>
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

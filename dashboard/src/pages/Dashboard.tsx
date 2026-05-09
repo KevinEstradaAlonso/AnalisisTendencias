@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Metric, Text, Flex, Grid, Badge } from '@tremor/react'
+import { Card, Metric, Text, Flex, Badge } from '@tremor/react'
 import RadarGeneral from '../components/RadarGeneral'
 import AlertasPanel from '../components/AlertasPanel'
 import MapaCalor from '../components/MapaCalor'
@@ -102,8 +102,8 @@ export default function Dashboard() {
       </div>
 
       {/* KPIs - Liquid Glass */}
-      <Grid numItemsSm={2} numItemsLg={4} className="gap-5">
-        <Card className="!border-l-4 !border-l-indigo-300">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <Card className="!border-l-4 !border-l-indigo-300 h-full !pl-7 sm:!pl-9">
           <div className="space-y-2">
             <Text className="text-gray-500 text-sm font-medium">Menciones Totales</Text>
             <div className="flex items-baseline gap-2">
@@ -113,7 +113,7 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        <Card className="!border-l-4 !border-l-rose-300">
+        <Card className="!border-l-4 !border-l-rose-300 h-full !pl-7 sm:!pl-9">
           <div className="space-y-2">
             <Text className="text-gray-500 text-sm font-medium">Menciones Negativas</Text>
             <Flex alignItems="baseline" className="gap-2">
@@ -127,14 +127,14 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        <Card className="!border-l-4 !border-l-amber-300">
+        <Card className="!border-l-4 !border-l-amber-300 h-full !pl-7 sm:!pl-9">
           <div className="space-y-2">
             <Text className="text-gray-500 text-sm font-medium">Urgencia Alta</Text>
             <Metric className="text-gray-800">{metricas.urgentes}</Metric>
           </div>
         </Card>
 
-        <Card className="!border-l-4 !border-l-orange-300">
+        <Card className="!border-l-4 !border-l-orange-300 h-full !pl-7 sm:!pl-9">
           <div className="space-y-2">
             <Flex justifyContent="between" alignItems="start">
               <Text className="text-gray-500 text-sm font-medium">Riesgo Viral</Text>
@@ -148,10 +148,10 @@ export default function Dashboard() {
             <Metric className="text-gray-800">{metricas.riesgoViral}</Metric>
           </div>
         </Card>
-      </Grid>
+      </div>
 
       {/* Contenido principal */}
-      <Grid numItemsLg={3} className="gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <RadarGeneral data={radarData} onTemaClick={handleTemaClick} />
           <MapaCalor data={mapaCalorData} />
@@ -159,7 +159,7 @@ export default function Dashboard() {
         <div>
           <AlertasPanel alertas={alertas} onAlertaClick={handleAlertaClick} />
         </div>
-      </Grid>
+      </div>
     </div>
   )
 }

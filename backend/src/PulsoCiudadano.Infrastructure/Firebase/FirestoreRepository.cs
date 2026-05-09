@@ -190,11 +190,56 @@ public class FirestoreRepository : IFirestoreRepository
 
         // Deserializar temas
         var temasConfig = new TemasConfig { Globales = new(), Personalizados = new() };
-        if (data.GetValueOrDefault("temas") is Dictionary<string, object> temasDict)
+        var temasRaw = data.GetValueOrDefault("temas");
+        
+        // Formato 1 (legacy/simple): temas: ["agua", "baches", ...]
+        if (temasRaw is IEnumerable<object> temasArray)
+        {
+            temasConfig.Globales = temasArray
+                .Select(t => t?.ToString() ?? "")
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+        // Formato 2 (nuevo): temas: { globales: [...], personalizados: [...] }
+        else if (temasRaw is Dictionary<string, object> temasDict)
         {
             if (temasDict.GetValueOrDefault("globales") is IEnumerable<object> globales)
             {
-                temasConfig.Globales = globales.Select(g => g?.ToString() ?? "").ToList();
+                temasConfig.Globales = globales
+                    .Select(g => g?.ToString() ?? "")
+                    .Where(g => !string.IsNullOrWhiteSpace(g))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+
+            if (temasDict.GetValueOrDefault("personalizados") is IEnumerable<object> personalizados)
+            {
+                foreach (var item in personalizados)
+                {
+                    if (item is Dictionary<string, object> temaDict)
+                    {
+                        var nombre = temaDict.GetValueOrDefault("nombre")?.ToString() ?? "";
+                        if (string.IsNullOrWhiteSpace(nombre)) continue;
+
+                        var keywords = new List<string>();
+                        if (temaDict.GetValueOrDefault("keywords") is IEnumerable<object> kwArray)
+                        {
+                            keywords = kwArray
+                                .Select(k => k?.ToString() ?? "")
+                                .Where(k => !string.IsNullOrWhiteSpace(k))
+                                .Distinct(StringComparer.OrdinalIgnoreCase)
+                                .ToList();
+                        }
+
+                        temasConfig.Personalizados.Add(new TemaPersonalizado
+                        {
+                            Nombre = nombre,
+                            Keywords = keywords,
+                            Activo = temaDict.GetValueOrDefault("activo") as bool? ?? true
+                        });
+                    }
+                }
             }
         }
         
