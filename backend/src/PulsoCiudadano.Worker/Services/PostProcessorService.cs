@@ -62,6 +62,13 @@ public class PostProcessorService : BackgroundService
         using var scope = _serviceProvider.CreateScope();
         var firestoreRepo = scope.ServiceProvider.GetRequiredService<IFirestoreRepository>();
 
+        // Dedupe antes de gastar tokens de IA / escrituras: si ya existe, no reprocesar.
+        if (await firestoreRepo.PostExistsAsync(postRaw.MunicipioId, postRaw.Id, postRaw.UrlOrigen))
+        {
+            _logger.LogInformation("Post ya procesado, skip: {Id} ({Fuente})", postRaw.Id, postRaw.Fuente);
+            return;
+        }
+
         // Obtener configuración del municipio
         var municipio = await firestoreRepo.GetMunicipioAsync(postRaw.MunicipioId);
         if (municipio == null)

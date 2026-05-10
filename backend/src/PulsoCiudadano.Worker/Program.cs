@@ -10,6 +10,7 @@ var builder = Host.CreateApplicationBuilder(args);
 
 // Configuración
 builder.Services.Configure<AISettings>(builder.Configuration.GetSection("AI"));
+builder.Services.Configure<ScrapingSettings>(builder.Configuration.GetSection("Scraping"));
 
 // Firebase
 var projectId = builder.Configuration["Firebase:ProjectId"] 

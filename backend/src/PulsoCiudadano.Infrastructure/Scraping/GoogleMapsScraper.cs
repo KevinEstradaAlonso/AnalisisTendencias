@@ -89,9 +89,12 @@ public class GoogleMapsScraper : ScraperBase
                     if (desde.HasValue && fecha < desde.Value)
                         continue;
 
+                    var reviewId = await review.GetAttributeAsync("data-review-id");
+                    var stableId = StablePostId.ForGoogleMaps(reviewId, url, textoContent, fecha);
+
                     posts.Add(new PostRaw
                     {
-                        Id = Guid.NewGuid().ToString(),
+                        Id = stableId,
                         Fuente = TipoFuente,
                         UrlOrigen = url,
                         Texto = textoContent,

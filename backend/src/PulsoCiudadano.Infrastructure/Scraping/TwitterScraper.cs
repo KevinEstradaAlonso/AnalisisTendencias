@@ -79,9 +79,11 @@ public class TwitterScraper : ScraperBase
                     if (desde.HasValue && fecha < desde.Value)
                         continue;
 
+                    var stableId = StablePostId.ForTwitter(linkElement, textoContent);
+
                     posts.Add(new PostRaw
                     {
-                        Id = Guid.NewGuid().ToString(),
+                        Id = stableId,
                         Fuente = TipoFuente,
                         UrlOrigen = linkElement ?? url,
                         Texto = textoContent,

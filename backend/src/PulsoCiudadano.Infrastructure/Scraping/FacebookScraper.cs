@@ -89,9 +89,11 @@ public class FacebookScraper : ScraperBase
                     if (posts.Any(p => p.Texto.Contains(textoContent) || textoContent.Contains(p.Texto)))
                         continue;
 
+                    var stableId = StablePostId.ForFacebook(url, textoContent.Trim());
+
                     posts.Add(new PostRaw
                     {
-                        Id = Guid.NewGuid().ToString(),
+                        Id = stableId,
                         Fuente = TipoFuente,
                         UrlOrigen = url,
                         Texto = textoContent.Trim(),

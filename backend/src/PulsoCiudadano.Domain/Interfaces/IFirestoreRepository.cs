@@ -14,6 +14,7 @@ public interface IFirestoreRepository
     
     // Posts
     Task SavePostAsync(string municipioId, Post post);
+    Task<bool> PostExistsAsync(string municipioId, string postId, string? urlOrigen = null);
     Task<List<Post>> GetPostsAsync(string municipioId, DateTime desde, DateTime hasta);
     Task<List<Post>> GetPostsPorTemaAsync(string municipioId, string tema, DateTime desde, DateTime hasta);
     

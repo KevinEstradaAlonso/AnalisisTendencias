@@ -52,6 +52,29 @@ public class FirestoreRepository : IFirestoreRepository
         await docRef.SetAsync(ConvertFromPost(post));
     }
 
+    public async Task<bool> PostExistsAsync(string municipioId, string postId, string? urlOrigen = null)
+    {
+        var docRef = _db.Collection("municipios").Document(municipioId)
+            .Collection("posts").Document(postId);
+
+        var snapshot = await docRef.GetSnapshotAsync();
+        if (snapshot.Exists)
+            return true;
+
+        if (string.IsNullOrWhiteSpace(urlOrigen))
+            return false;
+
+        // Retrocompat: antes se guardaban posts con IDs GUID. Como url_origen es estable,
+        // revisamos si ya existe un doc con el mismo url_origen para evitar reprocesar.
+        var q = await _db.Collection("municipios").Document(municipioId)
+            .Collection("posts")
+            .WhereEqualTo("url_origen", urlOrigen)
+            .Limit(1)
+            .GetSnapshotAsync();
+
+        return q.Documents.Count > 0;
+    }
+
     public async Task<List<Post>> GetPostsAsync(string municipioId, DateTime desde, DateTime hasta)
     {
         var snapshot = await _db.Collection("municipios").Document(municipioId)
