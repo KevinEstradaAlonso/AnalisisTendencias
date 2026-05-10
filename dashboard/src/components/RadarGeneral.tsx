@@ -20,6 +20,7 @@ export default function RadarGeneral({ data, onTemaClick }: Props) {
   const allTemas = useMemo(() => data.map((d) => d.tema), [data])
   const [disabledTemas, setDisabledTemas] = useState<Set<string>>(() => new Set())
   const [showAllTemas, setShowAllTemas] = useState(false)
+  const [didInitDefaults, setDidInitDefaults] = useState(false)
 
   useEffect(() => {
     setDisabledTemas((prev) => {
@@ -29,6 +30,22 @@ export default function RadarGeneral({ data, onTemaClick }: Props) {
       return next.size === prev.size ? prev : next
     })
   }, [allTemas])
+
+  useEffect(() => {
+    if (didInitDefaults) return
+    if (allTemas.length === 0) return
+
+    const isOtros = (t: string) => {
+      const norm = t.trim().toLowerCase()
+      return norm === 'otro' || norm === 'otros'
+    }
+
+    const otros = allTemas.find(isOtros)
+    if (otros) {
+      setDisabledTemas(new Set([otros]))
+    }
+    setDidInitDefaults(true)
+  }, [allTemas, didInitDefaults])
 
   const visibleData = useMemo(() => {
     if (disabledTemas.size === 0) return data
