@@ -64,6 +64,9 @@ public class FirestoreRepository : IFirestoreRepository
         if (string.IsNullOrWhiteSpace(urlOrigen))
             return false;
 
+        if (!LooksLikeUniquePermalink(urlOrigen))
+            return false;
+
         // Retrocompat: antes se guardaban posts con IDs GUID. Como url_origen es estable,
         // revisamos si ya existe un doc con el mismo url_origen para evitar reprocesar.
         var q = await _db.Collection("municipios").Document(municipioId)
@@ -73,6 +76,24 @@ public class FirestoreRepository : IFirestoreRepository
             .GetSnapshotAsync();
 
         return q.Documents.Count > 0;
+    }
+
+    private static bool LooksLikeUniquePermalink(string urlOrigen)
+    {
+        // Solo aplicar el fallback por URL cuando el URL representa un post/recurso único.
+        // En Facebook/Google Maps a menudo el scraper usa el URL del perfil/lugar para todos,
+        // lo que causaría falsos positivos (todos "ya procesados").
+        var u = urlOrigen.ToLowerInvariant();
+
+        // Twitter/X
+        if (u.Contains("/status/")) return true;
+
+        // Facebook
+        if (u.Contains("facebook.com/reel/") || u.Contains("facebook.com/posts/") || u.Contains("/videos/") || u.Contains("story.php"))
+            return true;
+
+        // Google Maps: no tratamos el URL del lugar como permalink de reseña.
+        return false;
     }
 
     public async Task<List<Post>> GetPostsAsync(string municipioId, DateTime desde, DateTime hasta)

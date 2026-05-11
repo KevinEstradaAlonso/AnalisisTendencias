@@ -74,7 +74,9 @@ public class FacebookScraper : ScraperBase
             catch { /* Continuar si no hay botones */ }
 
             // Extraer posts (selectores pueden variar)
-            var postElements = await page.QuerySelectorAllAsync("[data-ad-preview='message'], [data-testid='post_message'], div[dir='auto']");
+            // IMPORTANTE: evitar selectores demasiado amplios (p.ej. div[dir='auto']) porque capturan texto de UI y generan falsos duplicados.
+            var postElements = await page.QuerySelectorAllAsync(
+                "div[data-ad-preview='message'], div[data-ad-comet-preview='message'], [data-testid='post_message']");
             
             foreach (var postElement in postElements)
             {
@@ -89,13 +91,32 @@ public class FacebookScraper : ScraperBase
                     if (posts.Any(p => p.Texto.Contains(textoContent) || textoContent.Contains(p.Texto)))
                         continue;
 
-                    var stableId = StablePostId.ForFacebook(url, textoContent.Trim());
+                                        // Intentar extraer permalink real del post (reel/posts/videos/story)
+                                        // El contenedor del mensaje a veces no incluye el <a> directo, por eso subimos a un ancestro.
+                                        var permalink = await postElement.EvaluateAsync<string?>(
+                                                """
+                                                el => {
+                                                    const pick = (root) =>
+                                                        root?.querySelector?.("a[href*='/reel/'],a[href*='/posts/'],a[href*='/videos/'],a[href*='story.php']")?.href || null;
+
+                                                    let cur = el;
+                                                    for (let i = 0; i < 6 && cur; i++) {
+                                                        const found = pick(cur);
+                                                        if (found) return found;
+                                                        cur = cur.parentElement;
+                                                    }
+                                                    return null;
+                                                }
+                                                """);
+
+                                        var urlOrigen = !string.IsNullOrWhiteSpace(permalink) ? permalink : url;
+                                        var stableId = StablePostId.ForFacebook(urlOrigen, textoContent.Trim());
 
                     posts.Add(new PostRaw
                     {
                         Id = stableId,
                         Fuente = TipoFuente,
-                        UrlOrigen = url,
+                        UrlOrigen = urlOrigen,
                         Texto = textoContent.Trim(),
                         Fecha = DateTime.UtcNow, // Facebook oculta fechas sin login
                         MunicipioId = municipioId
