@@ -10,6 +10,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
   const [tendenciaDias, setTendenciaDias] = useState<7 | 30>(7)
+  const [radarDayOffset, setRadarDayOffset] = useState<0 | 1 | 2>(0)
   
   // Datos de hoy - useMemo para evitar re-renders infinitos
   const { inicioHoy, finHoy, hoy } = useMemo(() => {
@@ -20,6 +21,15 @@ export default function Dashboard() {
   }, []) // Solo se calcula una vez
   
   const { posts, loading: loadingPosts } = usePosts(inicioHoy, finHoy)
+
+  const { inicioAntier } = useMemo(() => {
+    const dayMs = 24 * 60 * 60 * 1000
+    return {
+      inicioAntier: new Date(inicioHoy.getTime() - 2 * dayMs),
+    }
+  }, [inicioHoy])
+
+  const { posts: postsRadar, loading: loadingRadar } = usePosts(inicioAntier, finHoy)
 
   const { desdeTendencia } = useMemo(() => {
     const dayMs = 24 * 60 * 60 * 1000
@@ -116,9 +126,15 @@ export default function Dashboard() {
 
   // Datos para radar por tema
   const radarData = useMemo(() => {
+    const dayMs = 24 * 60 * 60 * 1000
+    const selectedStart = new Date(inicioHoy.getTime() - radarDayOffset * dayMs)
+    const selectedEnd = new Date(selectedStart.getTime() + dayMs)
+
     const porTema = new Map<string, { total: number; negativos: number; positivos: number; neutrales: number }>()
     
-    posts.forEach(post => {
+    postsRadar.forEach(post => {
+      if (post.fecha < selectedStart || post.fecha >= selectedEnd) return
+
       const tema = post.clasificacion.temaPrincipal
       const current = porTema.get(tema) ?? { total: 0, negativos: 0, positivos: 0, neutrales: 0 }
       current.total++
@@ -131,7 +147,13 @@ export default function Dashboard() {
     return Array.from(porTema.entries())
       .map(([tema, stats]) => ({ tema, ...stats }))
       .sort((a, b) => b.total - a.total)
-  }, [posts])
+  }, [postsRadar, inicioHoy, radarDayOffset])
+
+  const radarDayLabel = useMemo(() => {
+    if (radarDayOffset === 0) return 'hoy'
+    if (radarDayOffset === 1) return 'ayer'
+    return 'antier'
+  }, [radarDayOffset])
 
   // Datos para mapa de calor
   const mapaCalorData = useMemo(() => {
@@ -235,7 +257,14 @@ export default function Dashboard() {
       {/* Contenido principal */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <RadarGeneral data={radarData} onTemaClick={handleTemaClick} />
+          <RadarGeneral
+            data={radarData}
+            onTemaClick={handleTemaClick}
+            selectedDay={radarDayOffset}
+            onSelectedDayChange={setRadarDayOffset}
+            selectedDayLabel={radarDayLabel}
+            loading={loadingRadar}
+          />
 
           <Card>
             <div className="flex items-start justify-between gap-4">

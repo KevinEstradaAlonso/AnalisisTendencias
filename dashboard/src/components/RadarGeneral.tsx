@@ -12,9 +12,26 @@ interface RadarData {
 interface Props {
   data: RadarData[]
   onTemaClick: (tema: string) => void
+  selectedDay: 0 | 1 | 2
+  onSelectedDayChange: (day: 0 | 1 | 2) => void
+  selectedDayLabel: string
+  loading?: boolean
 }
 
-export default function RadarGeneral({ data, onTemaClick }: Props) {
+const DAY_OPTIONS: Array<{ value: 0 | 1 | 2; label: string }> = [
+  { value: 0, label: 'Hoy' },
+  { value: 1, label: 'Ayer' },
+  { value: 2, label: 'Antier' },
+]
+
+export default function RadarGeneral({
+  data,
+  onTemaClick,
+  selectedDay,
+  onSelectedDayChange,
+  selectedDayLabel,
+  loading = false,
+}: Props) {
   const colors = ['blue', 'teal', 'purple', 'pink', 'red', 'orange', 'yellow', 'green']
 
   const allTemas = useMemo(() => data.map((d) => d.tema), [data])
@@ -77,15 +94,44 @@ export default function RadarGeneral({ data, onTemaClick }: Props) {
 
   return (
     <Card>
-      <div>
-        <h3 className="text-lg font-light text-gray-700">Radar de Temas</h3>
-        <p className="text-sm text-gray-400 font-light">Distribución de menciones hoy</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="text-lg font-light text-gray-700">Radar de Temas</h3>
+          <p className="text-sm text-gray-400 font-light">Distribución de menciones {selectedDayLabel.toLowerCase()}</p>
+        </div>
+
+        <div className="inline-flex p-1 rounded-2xl bg-white/45 border border-white/50 shadow-sm backdrop-blur-sm">
+          {DAY_OPTIONS.map((option) => {
+            const active = selectedDay === option.value
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => onSelectedDayChange(option.value)}
+                className={
+                  `px-3 py-1.5 rounded-xl text-sm transition-all ${
+                    active
+                      ? 'bg-white text-gray-700 shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
+                  }`
+                }
+              >
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
       
       <div className="mt-6">
-        {chartData.length === 0 ? (
+        {loading ? (
+          <div className="h-52 flex items-center justify-center">
+            <div className="glass-spinner w-10 h-10 animate-spin"></div>
+          </div>
+        ) : chartData.length === 0 ? (
           <div className="h-52 flex items-center justify-center text-sm text-gray-400 font-light">
-            Selecciona al menos un tema para ver la gráfica
+            No hay menciones para {selectedDayLabel.toLowerCase()}
           </div>
         ) : (
           <DonutChart
