@@ -35,64 +35,114 @@ export default function Candidatos() {
     [candidatos]
   )
 
-  // --- GRÁFICA 1: % de menciones por candidato (Donut) ---
-  const donutData = useMemo(() => {
-    const porCandidato = new Map<string, number>()
-
-    posts.forEach((post) => {
-      const tema = post.clasificacion.temaPrincipal?.trim().toLowerCase()
-      if (!tema || !candidatosLower.includes(tema)) return
-      porCandidato.set(tema, (porCandidato.get(tema) ?? 0) + 1)
-    })
-
-    const total = Array.from(porCandidato.values()).reduce((a, b) => a + b, 0)
-    if (total === 0) return []
-
-    return Array.from(porCandidato.entries())
-      .map(([temaLower, count]) => {
-        const nombreOriginal = candidatos.find((c) => c.trim().toLowerCase() === temaLower) ?? temaLower
-        return {
-          name: nombreOriginal,
-          value: Math.round((count / total) * 100),
-          menciones: count,
-        }
-      })
-      .sort((a, b) => b.value - a.value)
-  }, [posts, candidatos, candidatosLower])
-
-  // --- GRÁFICA 2: Sentimiento por candidato (Barras apiladas al 100%) ---
-  const sentimientoData = useMemo(() => {
-    const porCandidato = new Map<
-      string,
-      { total: number; positivos: number; negativos: number; neutrales: number }
-    >()
+  // --- Cálculo de datos base por candidato (compartido) ---
+  const datosCandidatos = useMemo(() => {
+    const mapa = new Map<string, {
+      menciones: number
+      positivos: number
+      negativos: number
+      neutrales: number
+      urgenciaAlta: number
+      tonoEnojoDesesperacion: number
+    }>()
 
     posts.forEach((post) => {
       const tema = post.clasificacion.temaPrincipal?.trim().toLowerCase()
       if (!tema || !candidatosLower.includes(tema)) return
 
-      const current = porCandidato.get(tema) ?? { total: 0, positivos: 0, negativos: 0, neutrales: 0 }
-      current.total++
+      const current = mapa.get(tema) ?? {
+        menciones: 0, positivos: 0, negativos: 0, neutrales: 0,
+        urgenciaAlta: 0, tonoEnojoDesesperacion: 0,
+      }
+      current.menciones++
+
       if (post.clasificacion.sentimiento === 'positivo') current.positivos++
       else if (post.clasificacion.sentimiento === 'negativo') current.negativos++
       else current.neutrales++
-      porCandidato.set(tema, current)
+
+      if (post.clasificacion.urgencia === 'alta' || post.clasificacion.urgencia === 'crítica') {
+        current.urgenciaAlta++
+      }
+
+      if (post.clasificacion.tono === 'enojado' || post.clasificacion.tono === 'desesperado' || post.clasificacion.tono === 'sarcástico') {
+        current.tonoEnojoDesesperacion++
+      }
+
+      mapa.set(tema, current)
     })
 
-    if (porCandidato.size === 0) return []
-
-    return Array.from(porCandidato.entries()).map(([temaLower, stats]) => {
+    return Array.from(mapa.entries()).map(([temaLower, stats]) => {
       const nombreOriginal = candidatos.find((c) => c.trim().toLowerCase() === temaLower) ?? temaLower
-      const total = stats.total || 1
-      return {
-        candidato: nombreOriginal,
-        Positivo: Math.round((stats.positivos / total) * 100),
-        Negativo: Math.round((stats.negativos / total) * 100),
-        Neutral: Math.round((stats.neutrales / total) * 100),
-        menciones: stats.total,
-      }
+      const total = stats.menciones || 1
+
+      const pctPos = stats.positivos / total
+      const pctNeg = stats.negativos / total
+      const pctUrg = stats.urgenciaAlta / total
+      const pctTonoMal = stats.tonoEnojoDesesperacion / total
+
+      return { nombre: nombreOriginal, ...stats, total, pctPos, pctNeg, pctUrg, pctTonoMal }
     })
   }, [posts, candidatos, candidatosLower])
+
+  // --- GRÁFICA 1: Índice de Impacto combinado (Donut) ---
+  // Fórmula: (volumenRelativo * 0.30) + (sentimientoNeto * 0.40) + (urgencia * 0.20) + (tono * 0.10)
+  // Donde cada sub-índice va de 0 a 100
+  const donutData = useMemo(() => {
+    if (datosCandidatos.length === 0) return []
+
+    const maxMenciones = Math.max(...datosCandidatos.map((d) => d.menciones), 1)
+
+    const conIndice = datosCandidatos.map((d) => {
+      // Volumen relativo: qué tanto se habla de él vs el que más menciones tiene (0-100)
+      const volumenRelativo = (d.menciones / maxMenciones) * 100
+
+      // Sentimiento neto: qué tan positiva es su percepción (0-100)
+      // 0 = todo negativo, 50 = balanceado, 100 = todo positivo
+      const sentimientoNeto = ((d.pctPos - d.pctNeg) + 1) * 50
+
+      // Urgencia: a menor urgencia, mejor (0-100)
+      const urgencia = (1 - d.pctUrg) * 100
+
+      // Tono: a menor tono negativo, mejor (0-100)
+      const tono = (1 - d.pctTonoMal) * 100
+
+      // Índice de Impacto ponderado (0-100)
+      const indice = Math.round(
+        volumenRelativo * 0.25 +
+        sentimientoNeto * 0.40 +
+        urgencia * 0.20 +
+        tono * 0.15
+      )
+
+      return { ...d, volumenRelativo, sentimientoNeto, urgencia, tono, indice }
+    })
+
+    const sumaIndices = conIndice.reduce((a, b) => a + b.indice, 0)
+    if (sumaIndices === 0) return []
+
+    return conIndice
+      .map((d) => ({
+        name: d.nombre,
+        value: Math.round((d.indice / sumaIndices) * 100),
+        menciones: d.menciones,
+        indice: d.indice,
+        sentimientoNeto: Math.round(d.sentimientoNeto),
+      }))
+      .sort((a, b) => b.value - a.value)
+  }, [datosCandidatos])
+
+  // --- GRÁFICA 2: Sentimiento por candidato (Barras apiladas al 100%) ---
+  const sentimientoData = useMemo(() => {
+    if (datosCandidatos.length === 0) return []
+
+    return datosCandidatos.map((d) => ({
+      candidato: d.nombre,
+      Positivo: Math.round(d.pctPos * 100),
+      Negativo: Math.round(d.pctNeg * 100),
+      Neutral: Math.round((d.neutrales / d.total) * 100),
+      menciones: d.menciones,
+    }))
+  }, [datosCandidatos])
 
   const loading = configLoading || postsLoading
 
@@ -181,11 +231,14 @@ export default function Candidatos() {
                     colors={DONUT_COLORS}
                     className="mt-4 max-w-md"
                   />
-                  <div className="mt-4 text-xs text-gray-400 space-y-1">
+                  <div className="mt-4 w-full space-y-2 text-xs">
+                    <p className="text-gray-400 font-light mb-1">Índice de Impacto — combinando volumen, sentimiento, urgencia y tono</p>
                     {donutData.map((d) => (
                       <div key={d.name} className="flex justify-between gap-8">
                         <span className="capitalize font-medium text-gray-600">{d.name}</span>
-                        <span className="text-gray-500">{d.value}% ({d.menciones} menciones)</span>
+                        <span className="text-gray-500">
+                          {d.value}% · Sentimiento: {d.sentimientoNeto}/100 · {d.menciones} menciones
+                        </span>
                       </div>
                     ))}
                   </div>
