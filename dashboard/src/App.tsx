@@ -7,6 +7,7 @@ import Alertas from './pages/Alertas'
 import Candidatos from './pages/Candidatos'
 import Usuarios from './pages/admin/Usuarios'
 import Configuracion from './pages/admin/Configuracion'
+import ImportacionManual from './pages/admin/ImportacionManual'
 import Layout from './components/Layout'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -39,6 +40,7 @@ function App() {
         <Route path="candidatos" element={<Candidatos />} />
         <Route path="admin/usuarios" element={<Usuarios />} />
         <Route path="admin/configuracion" element={<Configuracion />} />
+        <Route path="admin/importacion-manual" element={<ImportacionManual />} />
       </Route>
     </Routes>
   )

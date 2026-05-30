@@ -7,6 +7,7 @@ import {
   Cog6ToothIcon, 
   UsersIcon,
   UserGroupIcon,
+  DocumentArrowDownIcon,
   Bars3Icon,
   XMarkIcon,
   ArrowRightOnRectangleIcon 
@@ -28,6 +29,7 @@ export default function Layout() {
   const adminNavigation = [
     { name: 'Usuarios', href: '/admin/usuarios', icon: UsersIcon },
     { name: 'Configuración', href: '/admin/configuracion', icon: Cog6ToothIcon },
+    { name: 'Inserción manual', href: '/admin/importacion-manual', icon: DocumentArrowDownIcon },
   ]
 
   const isAdmin = userData?.rol === 'admin' || userData?.rol === 'super_admin'
