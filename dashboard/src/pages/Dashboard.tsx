@@ -12,6 +12,7 @@ export default function Dashboard() {
 
   const [tendenciaDias, setTendenciaDias] = useState<7 | 30>(7)
   const [radarDayOffset, setRadarDayOffset] = useState<0 | 1 | 2>(0)
+  const [rankingNegativosDias, setRankingNegativosDias] = useState<0 | 7 | 15 | 30>(0)
   
   // Datos de hoy - useMemo para evitar re-renders infinitos
   const { inicioHoy, finHoy, hoy } = useMemo(() => {
@@ -40,6 +41,23 @@ export default function Dashboard() {
 
   const { posts: postsTendencia, loading: loadingPostsTendencia } = usePosts(desdeTendencia, finHoy)
   const { alertas, loading: loadingAlertas } = useAlertas()
+
+  const { desdeRankingNegativos, rankingNegativosLabel } = useMemo(() => {
+    const dayMs = 24 * 60 * 60 * 1000
+    if (rankingNegativosDias === 0) {
+      return {
+        desdeRankingNegativos: inicioHoy,
+        rankingNegativosLabel: 'Hoy',
+      }
+    }
+
+    return {
+      desdeRankingNegativos: new Date(inicioHoy.getTime() - (rankingNegativosDias - 1) * dayMs),
+      rankingNegativosLabel: `${rankingNegativosDias} días`,
+    }
+  }, [inicioHoy, rankingNegativosDias])
+
+  const { posts: postsRankingNegativos, loading: loadingRankingNegativos } = usePosts(desdeRankingNegativos, finHoy)
 
   // Calcular métricas
   const metricas = useMemo(() => {
@@ -93,13 +111,24 @@ export default function Dashboard() {
     })
 
     return Array.from(porDia.entries()).map(([fecha, stats]) => {
-      const total = stats.total || 1 // Evitar división por cero
-      const pct = (n: number) => Math.round((n / total) * 100)
+      if (stats.total === 0) {
+        return {
+          fecha,
+          pctNegativos: 0,
+          pctNeutrales: 0,
+          pctPositivos: 0,
+        }
+      }
+
+      const total = stats.total
+      const pctNegativos = Math.round((stats.negativos / total) * 100)
+      const pctNeutrales = Math.round((stats.neutrales / total) * 100)
+      const pctPositivos = Math.max(0, 100 - pctNegativos - pctNeutrales)
       return {
         fecha,
-        pctNegativos: pct(stats.negativos),
-        pctNeutrales: pct(stats.neutrales),
-        pctPositivos: pct(stats.positivos),
+        pctNegativos,
+        pctNeutrales,
+        pctPositivos,
       }
     })
   }, [postsTendencia, tendenciaDias, inicioHoy])
@@ -107,7 +136,7 @@ export default function Dashboard() {
   const rankingNegativos = useMemo(() => {
     const porTema = new Map<string, { total: number; negativos: number }>()
 
-    posts.forEach((post) => {
+    postsRankingNegativos.forEach((post) => {
       const tema = post.clasificacion.temaPrincipal
       const current = porTema.get(tema) ?? { total: 0, negativos: 0 }
       current.total++
@@ -129,7 +158,7 @@ export default function Dashboard() {
       .slice(0, 5)
 
     return { topPorNumero, topPorPct }
-  }, [posts])
+  }, [postsRankingNegativos])
 
   // Datos para radar por tema
   const radarData = useMemo(() => {
@@ -333,14 +362,75 @@ export default function Dashboard() {
           </Card>
 
           <Card>
-            <div>
-              <h3 className="text-lg font-light text-gray-700">Top 5 temas más negativos</h3>
-              <p className="text-sm text-gray-400 font-light">Hoy · por número y por porcentaje</p>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-light text-gray-700">Top 5 temas más negativos</h3>
+                <p className="text-sm text-gray-400 font-light">{rankingNegativosLabel} · por número y por porcentaje</p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRankingNegativosDias(0)}
+                  className={
+                    `px-3 py-1.5 rounded-lg border transition-colors text-sm ${
+                      rankingNegativosDias === 0
+                        ? 'bg-white/70 border-white/60 text-gray-700'
+                        : 'bg-white/40 border-white/40 text-gray-600 hover:bg-white/60'
+                    }`
+                  }
+                >
+                  Hoy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRankingNegativosDias(7)}
+                  className={
+                    `px-3 py-1.5 rounded-lg border transition-colors text-sm ${
+                      rankingNegativosDias === 7
+                        ? 'bg-white/70 border-white/60 text-gray-700'
+                        : 'bg-white/40 border-white/40 text-gray-600 hover:bg-white/60'
+                    }`
+                  }
+                >
+                  7d
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRankingNegativosDias(15)}
+                  className={
+                    `px-3 py-1.5 rounded-lg border transition-colors text-sm ${
+                      rankingNegativosDias === 15
+                        ? 'bg-white/70 border-white/60 text-gray-700'
+                        : 'bg-white/40 border-white/40 text-gray-600 hover:bg-white/60'
+                    }`
+                  }
+                >
+                  15d
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRankingNegativosDias(30)}
+                  className={
+                    `px-3 py-1.5 rounded-lg border transition-colors text-sm ${
+                      rankingNegativosDias === 30
+                        ? 'bg-white/70 border-white/60 text-gray-700'
+                        : 'bg-white/40 border-white/40 text-gray-600 hover:bg-white/60'
+                    }`
+                  }
+                >
+                  30d
+                </button>
+              </div>
             </div>
 
-            {posts.length === 0 ? (
+            {loadingRankingNegativos ? (
+              <div className="mt-6 h-40 flex items-center justify-center">
+                <div className="glass-spinner w-10 h-10 animate-spin"></div>
+              </div>
+            ) : postsRankingNegativos.length === 0 ? (
               <div className="mt-6 text-center py-10 text-gray-400">
-                <p className="font-light">Sin menciones hoy</p>
+                <p className="font-light">Sin menciones en este período</p>
               </div>
             ) : (
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">

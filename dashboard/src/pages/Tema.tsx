@@ -140,6 +140,8 @@ export default function Tema() {
               <TableRow>
                 <TableHeaderCell className="text-xs font-medium text-gray-500 uppercase tracking-wider w-40">Fecha</TableHeaderCell>
                 <TableHeaderCell className="text-xs font-medium text-gray-500 uppercase tracking-wider w-[520px]">Resumen</TableHeaderCell>
+                <TableHeaderCell className="text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Fuente</TableHeaderCell>
+                <TableHeaderCell className="text-xs font-medium text-gray-500 uppercase tracking-wider w-56">URL</TableHeaderCell>
                 <TableHeaderCell className="text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Ubicación</TableHeaderCell>
                 <TableHeaderCell className="text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Sentimiento</TableHeaderCell>
                 <TableHeaderCell className="text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Urgencia</TableHeaderCell>
@@ -167,6 +169,20 @@ export default function Tema() {
                         {expandedPost === post.id ? 'Menos' : 'Más'}
                       </button>
                     )}
+                  </TableCell>
+                  <TableCell className="align-top text-sm text-gray-600 capitalize">
+                    {post.fuente}
+                  </TableCell>
+                  <TableCell className="align-top text-sm text-gray-600">
+                    <a
+                      href={post.urlOrigen}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="text-indigo-600 hover:text-indigo-800 hover:underline break-all"
+                      title={post.urlOrigen}
+                    >
+                      Abrir origen
+                    </a>
                   </TableCell>
                   <TableCell className="align-top text-sm text-gray-600">
                     <span className="truncate block max-w-[120px]" title={post.ubicacion.colonia ?? 'No detectada'}>
