@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AreaChart, Card, Flex, Metric, Text } from '@tremor/react'
+import { BarChart, Card, Flex, Metric, Text } from '@tremor/react'
 import RadarGeneral from '../components/RadarGeneral'
 import AlertasPanel from '../components/AlertasPanel'
 import MapaCalor from '../components/MapaCalor'
 import { usePosts, useAlertas, type Alerta } from '../hooks/useFirestore'
+import '../components/GraficaTendencia.css'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -91,10 +92,16 @@ export default function Dashboard() {
       else current.neutrales++
     })
 
-    return Array.from(porDia.entries()).map(([fecha, stats]) => ({
-      fecha,
-      ...stats,
-    }))
+    return Array.from(porDia.entries()).map(([fecha, stats]) => {
+      const total = stats.total || 1 // Evitar división por cero
+      const pct = (n: number) => Math.round((n / total) * 100)
+      return {
+        fecha,
+        pctNegativos: pct(stats.negativos),
+        pctNeutrales: pct(stats.neutrales),
+        pctPositivos: pct(stats.positivos),
+      }
+    })
   }, [postsTendencia, tendenciaDias, inicioHoy])
 
   const rankingNegativos = useMemo(() => {
@@ -308,18 +315,20 @@ export default function Dashboard() {
                 <div className="glass-spinner w-10 h-10 animate-spin"></div>
               </div>
             ) : (
-              <AreaChart
-                className="h-72 mt-6"
-                data={tendenciaSentimientoData}
-                index="fecha"
-                categories={['negativos', 'neutrales', 'positivos']}
-                colors={['rose', 'gray', 'emerald']}
-                stack={true}
-                showLegend
-                showGridLines={false}
-                curveType="monotone"
-                showAnimation={true}
-              />
+              <div className="grafica-tendencia-tooltip">
+                <BarChart
+                  className="h-72 mt-6"
+                  data={tendenciaSentimientoData}
+                  index="fecha"
+                  categories={['pctNegativos', 'pctNeutrales', 'pctPositivos']}
+                  colors={['rose', 'gray', 'emerald']}
+                  stack={true}
+                  showLegend
+                  showGridLines={false}
+                  showAnimation={true}
+                  yAxisWidth={40}
+                />
+              </div>
             )}
           </Card>
 

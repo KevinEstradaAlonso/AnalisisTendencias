@@ -22,21 +22,23 @@ export default function Tema() {
 
   // Filtrar posts por tema
   const postsTema = useMemo(() => {
-    return posts.filter(p => 
+    const filtered = posts.filter(p => 
       p.clasificacion.temaPrincipal === tema || 
       p.clasificacion.temas.includes(tema ?? '')
     )
+    console.log('Tema.tsx - Posts totales:', posts.length, '| Posts filtrados:', filtered.length, '| Tema:', tema)
+    return filtered
   }, [posts, tema])
 
-  // Datos para gráfica de tendencia
+  // Datos para gráfica de tendencia (en porcentajes)
   const tendenciaData = useMemo(() => {
-    const porDia = new Map<string, { total: number; negativos: number; positivos: number }>()
+    const porDia = new Map<string, { total: number; negativos: number; positivos: number; neutrales: number }>()
     
     // Inicializar todos los días
     for (let i = 6; i >= 0; i--) {
       const fecha = new Date(hasta.getTime() - i * 24 * 60 * 60 * 1000)
       const key = fecha.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })
-      porDia.set(key, { total: 0, negativos: 0, positivos: 0 })
+      porDia.set(key, { total: 0, negativos: 0, positivos: 0, neutrales: 0 })
     }
 
     postsTema.forEach(post => {
@@ -46,13 +48,22 @@ export default function Tema() {
         current.total++
         if (post.clasificacion.sentimiento === 'negativo') current.negativos++
         else if (post.clasificacion.sentimiento === 'positivo') current.positivos++
+        else current.neutrales++
       }
     })
 
-    return Array.from(porDia.entries()).map(([fecha, stats]) => ({
-      fecha,
-      ...stats
-    }))
+    const result = Array.from(porDia.entries()).map(([fecha, stats]) => {
+      const total = stats.total || 1 // Evitar división por cero
+      const pct = (n: number) => Math.round((n / total) * 100)
+      return {
+        fecha,
+        pctNegativos: pct(stats.negativos),
+        pctNeutrales: pct(stats.neutrales),
+        pctPositivos: pct(stats.positivos),
+      }
+    })
+    console.log('Tema.tsx - tendenciaData result:', result)
+    return result
   }, [postsTema, hasta])
 
   // Datos para mapa de calor

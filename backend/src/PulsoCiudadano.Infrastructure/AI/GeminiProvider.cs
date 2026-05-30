@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PulsoCiudadano.Domain.Interfaces;
 using PulsoCiudadano.Domain.Models;
@@ -14,17 +15,22 @@ public class GeminiProvider : IAIProvider
 {
     private readonly HttpClient _httpClient;
     private readonly GeminiSettings _settings;
+    private readonly ILogger<GeminiProvider> _logger;
     
     public string Nombre => "gemini";
 
-    public GeminiProvider(HttpClient httpClient, IOptions<AISettings> settings)
+    public GeminiProvider(HttpClient httpClient, IOptions<AISettings> settings, ILogger<GeminiProvider> logger)
     {
         _httpClient = httpClient;
         _settings = settings.Value.Gemini;
+        _logger = logger;
     }
 
     public async Task<ClasificacionCompleta> ClasificarAsync(string texto, List<string> temas)
     {
+        _logger.LogInformation("🤖 LLAMADA A IA: Clasificando texto | Temas: {Temas} | Longitud: {Longitud}", 
+            string.Join(",", temas), texto.Length);
+        
         var prompt = PromptBuilder.BuildClasificacionPrompt(texto, temas);
         
         var requestBody = new
@@ -56,6 +62,7 @@ public class GeminiProvider : IAIProvider
         var textResponse = result?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text
             ?? throw new InvalidOperationException("Respuesta vacía de Gemini");
 
+        _logger.LogInformation("✅ RESPUESTA IA: OK");
         return AIResponseParser.Parse(textResponse);
     }
 }

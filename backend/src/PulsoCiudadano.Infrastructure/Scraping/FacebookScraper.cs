@@ -111,6 +111,14 @@ public class FacebookScraper : ScraperBase
 
                                         var urlOrigen = !string.IsNullOrWhiteSpace(permalink) ? permalink : url;
                                         var stableId = StablePostId.ForFacebook(urlOrigen, textoContent.Trim());
+                                        
+                                        // Log para debugging de dedup
+                                        _logger.LogInformation(
+                                            "📦 Extrayendo post: ID={StableId} | URL={Url} | TextoLength={Length} | Primeras palabras={Preview}",
+                                            stableId, 
+                                            urlOrigen,
+                                            textoContent.Length,
+                                            string.Join(" ", textoContent.Trim().Split().Take(5)));
 
                     posts.Add(new PostRaw
                     {
@@ -121,6 +129,8 @@ public class FacebookScraper : ScraperBase
                         Fecha = DateTime.UtcNow, // Facebook oculta fechas sin login
                         MunicipioId = municipioId
                     });
+                    
+                    _logger.LogDebug("✅ Post encolado: {Id}", stableId);
                 }
                 catch (Exception ex)
                 {

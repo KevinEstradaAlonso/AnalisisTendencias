@@ -17,6 +17,9 @@ public class PostProcessorService : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly PostChannel _postChannel;
     private readonly AIProviderFactory _aiProviderFactory;
+    private int _llamadasIATotal = 0;
+    private int _postsProcessados = 0;
+    private int _postsSkipDedup = 0;
 
     public PostProcessorService(
         ILogger<PostProcessorService> logger,
@@ -65,7 +68,9 @@ public class PostProcessorService : BackgroundService
         // Dedupe antes de gastar tokens de IA / escrituras: si ya existe, no reprocesar.
         if (await firestoreRepo.PostExistsAsync(postRaw.MunicipioId, postRaw.Id, postRaw.UrlOrigen))
         {
-            _logger.LogInformation("Post ya procesado, skip: {Id} ({Fuente})", postRaw.Id, postRaw.Fuente);
+            _postsSkipDedup++;
+            _logger.LogInformation("📊 Post ya procesado, skip: {Id} ({Fuente}) | Total: Procesados={Procesados}, SkipDedup={Skip}, LlamadasIA={IA}", 
+                postRaw.Id, postRaw.Fuente, _postsProcessados, _postsSkipDedup, _llamadasIATotal);
             return;
         }
 
@@ -84,6 +89,7 @@ public class PostProcessorService : BackgroundService
 
         // Clasificar con IA
         var aiProvider = _aiProviderFactory.GetProvider();
+        _llamadasIATotal++;
         var clasificacion = await aiProvider.ClasificarAsync(postRaw.Texto, temas);
 
         // Crear post clasificado
@@ -105,13 +111,17 @@ public class PostProcessorService : BackgroundService
 
         // Guardar en Firestore
         await firestoreRepo.SavePostAsync(post.MunicipioId, post);
+        _postsProcessados++;
 
         _logger.LogInformation(
-            "Post procesado: {Id} | Tema: {Tema} | Sentimiento: {Sentimiento} | Urgencia: {Urgencia}",
+            "📊 Post procesado: {Id} | Tema: {Tema} | Sentimiento: {Sentimiento} | Urgencia: {Urgencia} | Total: Procesados={Procesados}, SkipDedup={Skip}, LlamadasIA={IA}",
             post.Id,
             post.Clasificacion.TemaPrincipal,
             post.Clasificacion.Sentimiento,
-            post.Clasificacion.Urgencia);
+            post.Clasificacion.Urgencia,
+            _postsProcessados,
+            _postsSkipDedup,
+            _llamadasIATotal);
 
         // Verificar si debe generar alerta
         await VerificarAlertaAsync(firestoreRepo, post, municipio);

@@ -1,4 +1,5 @@
 using Google.Cloud.Firestore;
+using Microsoft.Extensions.Logging;
 using PulsoCiudadano.Domain.Enums;
 using PulsoCiudadano.Domain.Interfaces;
 using PulsoCiudadano.Domain.Models;
@@ -11,10 +12,12 @@ namespace PulsoCiudadano.Infrastructure.Firebase;
 public class FirestoreRepository : IFirestoreRepository
 {
     private readonly FirestoreDb _db;
+    private readonly ILogger<FirestoreRepository> _logger;
 
-    public FirestoreRepository(FirestoreDb db)
+    public FirestoreRepository(FirestoreDb db, ILogger<FirestoreRepository> logger)
     {
         _db = db;
+        _logger = logger;
     }
 
     #region Municipios
@@ -54,45 +57,70 @@ public class FirestoreRepository : IFirestoreRepository
 
     public async Task<bool> PostExistsAsync(string municipioId, string postId, string? urlOrigen = null)
     {
-        var docRef = _db.Collection("municipios").Document(municipioId)
-            .Collection("posts").Document(postId);
+        var postsCollection = _db.Collection("municipios").Document(municipioId)
+            .Collection("posts");
 
-        var snapshot = await docRef.GetSnapshotAsync();
-        if (snapshot.Exists)
-            return true;
+        try
+        {
+            // PASO 1: Buscar por ID (primary key) - más rápido
+            var docRef = postsCollection.Document(postId);
+            var snapshot = await docRef.GetSnapshotAsync();
+            if (snapshot.Exists)
+            {
+                _logger.LogInformation("✅ Dedup: Encontrado por ID: {PostId}", postId);
+                return true;
+            }
 
-        if (string.IsNullOrWhiteSpace(urlOrigen))
+            // PASO 2: Si no existe por ID pero tiene urlOrigen, buscar por URL
+            // (aplica para posts con URLs únicos como Twitter, Facebook posts individuales, etc)
+            if (!string.IsNullOrWhiteSpace(urlOrigen) && IsUniqueUrl(urlOrigen))
+            {
+                _logger.LogInformation("🔍 Dedup: Buscando por URL: {Url}", urlOrigen);
+                var q = await postsCollection
+                    .WhereEqualTo("url_origen", urlOrigen)
+                    .Limit(1)
+                    .GetSnapshotAsync();
+
+                if (q.Documents.Count > 0)
+                {
+                    _logger.LogInformation("✅ Dedup: Encontrado por URL: {Url}", urlOrigen);
+                    return true;
+                }
+            }
+
+            // No es duplicado
+            _logger.LogInformation("📝 Dedup: Nuevo post (no encontrado): {PostId}", postId);
             return false;
-
-        if (!LooksLikeUniquePermalink(urlOrigen))
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error en PostExistsAsync para {PostId}", postId);
+            // En caso de error, asumir que NO existe para evitar perder posts
             return false;
-
-        // Retrocompat: antes se guardaban posts con IDs GUID. Como url_origen es estable,
-        // revisamos si ya existe un doc con el mismo url_origen para evitar reprocesar.
-        var q = await _db.Collection("municipios").Document(municipioId)
-            .Collection("posts")
-            .WhereEqualTo("url_origen", urlOrigen)
-            .Limit(1)
-            .GetSnapshotAsync();
-
-        return q.Documents.Count > 0;
+        }
     }
 
-    private static bool LooksLikeUniquePermalink(string urlOrigen)
+    /// <summary>
+    /// Determina si un URL es suficientemente único para garantizar deduplicación por URL.
+    /// Para Facebook sin login, los URLs son de la página, no del post individual.
+    /// </summary>
+    private static bool IsUniqueUrl(string url)
     {
-        // Solo aplicar el fallback por URL cuando el URL representa un post/recurso único.
-        // En Facebook/Google Maps a menudo el scraper usa el URL del perfil/lugar para todos,
-        // lo que causaría falsos positivos (todos "ya procesados").
-        var u = urlOrigen.ToLowerInvariant();
+        var u = url.ToLowerInvariant();
 
-        // Twitter/X
+        // Twitter: /status/{id} es único por post
         if (u.Contains("/status/")) return true;
 
-        // Facebook
-        if (u.Contains("facebook.com/reel/") || u.Contains("facebook.com/posts/") || u.Contains("/videos/") || u.Contains("story.php"))
+        // Facebook: reel/posts/videos/story son permalinks únicos
+        if (u.Contains("facebook.com/reel/") || u.Contains("facebook.com/posts/") || 
+            u.Contains("/videos/") || u.Contains("story.php"))
             return true;
 
-        // Google Maps: no tratamos el URL del lugar como permalink de reseña.
+        // Google Maps: el review ID es único
+        if (u.Contains("maps.app.goo.gl")) return true;
+
+        // Para todo lo demás (Facebook sin login, perfiles generales), NO es único
+        // La dedup debe confiar en el hash determinístico del ID
         return false;
     }
 

@@ -1,4 +1,5 @@
 using System.ClientModel;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenAI;
 using OpenAI.Chat;
@@ -13,11 +14,13 @@ namespace PulsoCiudadano.Infrastructure.AI;
 public class DeepSeekProvider : IAIProvider
 {
     private readonly ChatClient _client;
+    private readonly ILogger<DeepSeekProvider> _logger;
     
     public string Nombre => "deepseek";
 
-    public DeepSeekProvider(IOptions<AISettings> settings)
+    public DeepSeekProvider(IOptions<AISettings> settings, ILogger<DeepSeekProvider> logger)
     {
+        _logger = logger;
         var deepSeekSettings = settings.Value.DeepSeek;
         
         var options = new OpenAIClientOptions
@@ -32,6 +35,9 @@ public class DeepSeekProvider : IAIProvider
 
     public async Task<ClasificacionCompleta> ClasificarAsync(string texto, List<string> temas)
     {
+        _logger.LogInformation("🤖 LLAMADA A IA: Clasificando texto | Temas: {Temas} | Longitud: {Longitud}", 
+            string.Join(",", temas), texto.Length);
+        
         var prompt = PromptBuilder.BuildClasificacionPrompt(texto, temas);
         
         var messages = new List<ChatMessage>
@@ -50,6 +56,7 @@ public class DeepSeekProvider : IAIProvider
         var textResponse = response.Value.Content[0].Text
             ?? throw new InvalidOperationException("Respuesta vacía de DeepSeek");
 
+        _logger.LogInformation("✅ RESPUESTA IA: OK");
         return AIResponseParser.Parse(textResponse);
     }
 }
