@@ -16,6 +16,32 @@
   --text-secondary: #6b7280;
   --bg-gradient-start: #f0f4ff;
   --bg-gradient-end: #faf5ff;
+
+  /* Tremor CSS Variables - Necesarias para tooltips y colores */
+  --tremor-background: #ffffff;
+  --tremor-content: #6b7280;
+  --tremor-content-emphasis: #374151;
+  --tremor-border: #e5e7eb;
+  --tremor-ring: #e5e7eb;
+  --tremor-brand: #3b82f6;
+  --tremor-brand-emphasis: #1d4ed8;
+  --tremor-brand-muted: #bfdbfe;
+  --tremor-brand-subtle: #60a5fa;
+  --tremor-brand-faint: #eff6ff;
+  --tremor-background-muted: #f9fafb;
+  --tremor-background-subtle: #f3f4f6;
+  --tremor-background-emphasis: #374151;
+  --tremor-dropdown: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --tremor-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+
+/* Dark mode variables (opcional, las dejamos con valores light) */
+.dark {
+  --tremor-background: #1a1a2e;
+  --tremor-content: #9ca3af;
+  --tremor-content-emphasis: #f3f4f6;
+  --tremor-border: #374151;
 }
 
 /* Fondo con gradiente suave */
@@ -174,4 +200,80 @@ body {
   border: 3px solid rgba(129, 140, 248, 0.2);
   border-top-color: var(--accent-primary);
   border-radius: 50%;
+}
+
+/* ============================================
+   TREMOR FIXES - SVG fills y colores
+   ============================================
+
+   Tailwind v4 NO genera clases SVG (fill-*, stroke-*)
+   automáticamente. Tremor las usa internamente para
+   DonutChart, BarChart, etc. Las definimos aquí.
+*/
+
+/* Indigo (color primario de Tremor para el primer slice) */
+.fill-indigo-500 { fill: #6366f1; }
+.dark\:fill-indigo-500 { fill: #6366f1; }
+.fill-indigo-400 { fill: #818cf8; }
+.fill-indigo-600 { fill: #4f46e5; }
+
+/* Otros colores que usa Tremor en gráficas */
+.fill-blue-500 { fill: #3b82f6; }
+.fill-teal-500 { fill: #14b8a6; }
+.fill-purple-500 { fill: #a855f7; }
+.fill-pink-500 { fill: #ec4899; }
+.fill-red-500 { fill: #ef4444; }
+.fill-orange-500 { fill: #f97316; }
+.fill-yellow-500 { fill: #eab308; }
+.fill-green-500 { fill: #22c55e; }
+.fill-cyan-500 { fill: #06b6d4; }
+.fill-fuchsia-500 { fill: #d946ef; }
+.fill-violet-500 { fill: #8b5cf6; }
+.fill-rose-500 { fill: #f43f5e; }
+.fill-emerald-500 { fill: #10b981; }
+.fill-amber-500 { fill: #f59e0b; }
+.fill-gray-500 { fill: #6b7280; }
+
+/* dark mode variants */
+.dark\:fill-blue-500 { fill: #3b82f6; }
+.dark\:fill-teal-500 { fill: #14b8a6; }
+.dark\:fill-purple-500 { fill: #a855f7; }
+.dark\:fill-pink-500 { fill: #ec4899; }
+.dark\:fill-red-500 { fill: #ef4444; }
+.dark\:fill-orange-500 { fill: #f97316; }
+.dark\:fill-yellow-500 { fill: #eab308; }
+.dark\:fill-green-500 { fill: #22c55e; }
+.dark\:fill-cyan-500 { fill: #06b6d4; }
+.dark\:fill-fuchsia-500 { fill: #d946ef; }
+.dark\:fill-violet-500 { fill: #8b5cf6; }
+.dark\:fill-rose-500 { fill: #f43f5e; }
+.dark\:fill-emerald-500 { fill: #10b981; }
+.dark\:fill-amber-500 { fill: #f59e0b; }
+.dark\:fill-gray-500 { fill: #6b7280; }
+
+/* DonutChart - label central y valor */
+.tremor-DonutChart-label text {
+  fill: #6b7280 !important;
+  font-size: 14px !important;
+}
+
+.tremor-DonutChart-value text {
+  fill: #374151 !important;
+  font-weight: 700 !important;
+  font-size: 28px !important;
+}
+
+.tremor-DonutChart-value text tspan:last-child {
+  fill: #6b7280 !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+}
+
+/* Leyendas de Tremor */
+.tremor-Legend-root {
+  color: #6b7280 !important;
+}
+
+.tremor-Legend-root span {
+  color: #6b7280 !important;
 }

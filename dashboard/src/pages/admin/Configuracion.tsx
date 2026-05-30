@@ -142,6 +142,7 @@ export default function Configuracion() {
 
   const [temasGlobales, setTemasGlobales] = useState<string[]>([])
   const [temasGlobalesInput, setTemasGlobalesInput] = useState('')
+  const [candidatos, setCandidatos] = useState<string[]>([])
 
   const [personalizados, setPersonalizados] = useState<TemaPersonalizado[]>([])
   const [nuevoNombre, setNuevoNombre] = useState('')
@@ -167,10 +168,15 @@ export default function Configuracion() {
         const data = snap.exists() ? snap.data() : {}
         const fuentes = parseFuentes((data as any)?.fuentes)
         const temas = parseTemas((data as any)?.temas)
+        const candidatosRaw = (data as any)?.temas?.candidatos
+        const candidatosIniciales = Array.isArray(candidatosRaw)
+          ? uniqueCaseInsensitive(candidatosRaw.map((t: unknown) => String(t ?? '')).filter(Boolean))
+          : []
         if (cancelled) return
         setFuentes(fuentes)
         setTemasGlobales(temas.globales)
         setPersonalizados(temas.personalizados)
+        setCandidatos(candidatosIniciales)
       } catch (e) {
         if (cancelled) return
         setError('No se pudo cargar la configuración de temas.')
@@ -246,6 +252,18 @@ export default function Configuracion() {
     setSuccess('')
     const key = tema.trim().toLowerCase()
     setTemasGlobales((prev) => prev.filter((t) => t.trim().toLowerCase() !== key))
+    // Si era candidato, también lo quitamos de candidatos
+    setCandidatos((prev) => prev.filter((c) => c.trim().toLowerCase() !== key))
+  }
+
+  const toggleCandidato = (tema: string) => {
+    setSuccess('')
+    const key = tema.trim().toLowerCase()
+    setCandidatos((prev) => {
+      const exists = prev.some((c) => c.trim().toLowerCase() === key)
+      if (exists) return prev.filter((c) => c.trim().toLowerCase() !== key)
+      return [...prev, tema.trim()]
+    })
   }
 
   const addPersonalizado = () => {
@@ -295,6 +313,7 @@ export default function Configuracion() {
             keywords: uniqueCaseInsensitive(p.keywords),
             activo: Boolean(p.activo),
           })),
+          candidatos: uniqueCaseInsensitive(candidatos),
         },
       }
 
@@ -476,18 +495,37 @@ export default function Configuracion() {
                   </div>
 
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {temasGlobalesNormalized.map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => removeGlobal(t)}
-                        title="Quitar"
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/40 border border-white/40 hover:bg-white/60 transition-colors text-sm text-gray-700"
-                      >
-                        <span className="capitalize">{t}</span>
-                        <span className="text-gray-400">×</span>
-                      </button>
-                    ))}
+                    {temasGlobalesNormalized.map((t) => {
+                      const esCandidato = candidatos.some((c) => c.trim().toLowerCase() === t.trim().toLowerCase())
+                      return (
+                        <div
+                          key={t}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/40 border border-white/40 text-sm text-gray-700 group"
+                        >
+                          <span className="capitalize">{t}</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleCandidato(t)}
+                            title={esCandidato ? 'Quitar de candidatos' : 'Marcar como candidato/a'}
+                            className={`ml-1 px-1.5 py-0.5 rounded text-xs font-medium transition-all ${
+                              esCandidato
+                                ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+                                : 'bg-gray-100/50 text-gray-400 border border-transparent opacity-0 group-hover:opacity-100 hover:bg-indigo-50 hover:text-indigo-500'
+                            }`}
+                          >
+                            {esCandidato ? '🗳 Candidato' : 'Candidato'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeGlobal(t)}
+                            title="Quitar tema"
+                            className="text-gray-400 hover:text-rose-600 transition-colors ml-1"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )
+                    })}
                     {temasGlobalesNormalized.length === 0 && (
                       <div className="text-sm text-gray-400">Aún no hay temas globales.</div>
                     )}

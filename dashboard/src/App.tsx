@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Tema from './pages/Tema'
 import Alertas from './pages/Alertas'
+import Candidatos from './pages/Candidatos'
 import Usuarios from './pages/admin/Usuarios'
 import Configuracion from './pages/admin/Configuracion'
 import Layout from './components/Layout'
@@ -35,6 +36,7 @@ function App() {
         <Route index element={<Dashboard />} />
         <Route path="tema/:tema" element={<Tema />} />
         <Route path="alertas" element={<Alertas />} />
+        <Route path="candidatos" element={<Candidatos />} />
         <Route path="admin/usuarios" element={<Usuarios />} />
         <Route path="admin/configuracion" element={<Configuracion />} />
       </Route>

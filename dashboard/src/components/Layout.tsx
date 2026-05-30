@@ -6,6 +6,7 @@ import {
   BellAlertIcon, 
   Cog6ToothIcon, 
   UsersIcon,
+  UserGroupIcon,
   Bars3Icon,
   XMarkIcon,
   ArrowRightOnRectangleIcon 
@@ -21,6 +22,7 @@ export default function Layout() {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: HomeIcon },
     { name: 'Alertas', href: '/alertas', icon: BellAlertIcon },
+    { name: 'Candidatos', href: '/candidatos', icon: UserGroupIcon },
   ]
 
   const adminNavigation = [

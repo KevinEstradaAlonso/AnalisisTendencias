@@ -25,6 +25,7 @@ public class TemasConfig
 {
     public required List<string> Globales { get; set; }
     public required List<TemaPersonalizado> Personalizados { get; set; }
+    public List<string> Candidatos { get; set; } = new();
 }
 
 public class TemaPersonalizado
