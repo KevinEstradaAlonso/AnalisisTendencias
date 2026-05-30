@@ -491,8 +491,6 @@ export default function Dashboard() {
           <MapaCalor data={mapaCalorData} />
         </div>
         <div className="space-y-6">
-          <AlertasPanel alertas={alertas} onAlertaClick={handleAlertaClick} />
-
           <Card>
             <div>
               <h3 className="text-lg font-light text-gray-700">Sentimiento hoy</h3>
@@ -546,6 +544,8 @@ export default function Dashboard() {
               </div>
             )}
           </Card>
+
+          <AlertasPanel alertas={alertas} onAlertaClick={handleAlertaClick} />
         </div>
       </div>
     </div>
